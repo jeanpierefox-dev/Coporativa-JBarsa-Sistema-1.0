@@ -37,11 +37,25 @@ export const validateConfig = async (firebaseConfig: any): Promise<{ valid: bool
         const db = getFirestore(app);
         
         // Try to read/write to validate rules
-        await setDoc(doc(db, 'config', 'validation_test'), { check: true, ts: Date.now() });
+        // We set merge: true to avoid overwriting if it exists, but mainly to test write permission
+        await setDoc(doc(db, 'config', 'validation_test'), { check: true, ts: Date.now() }, { merge: true });
 
         return { valid: true };
     } catch (e: any) {
-        return { valid: false, error: e.message || "La configuración no es válida." };
+        let msg = e.message || "Error desconocido";
+        
+        // Translate common Firestore errors for better UX
+        if (e.code === 'permission-denied') {
+            msg = "⛔ PERMISOS DENEGADOS: Ve a Firebase Console > Firestore Database > Reglas. Cambia 'allow read, write: if false;' a 'if true;'";
+        } else if (e.code === 'unimplemented' || e.code === 'not-found') {
+            msg = "⚠️ BASE DE DATOS NO CREADA: Ve a Firebase Console > Firestore Database y haz clic en 'Crear base de datos'.";
+        } else if (e.code === 'unavailable') {
+            msg = "📡 SIN CONEXIÓN: Verifica tu internet o si el servicio de Firebase está activo.";
+        } else if (e.code === 'invalid-argument') {
+            msg = "❌ DATOS INCORRECTOS: El formato de la configuración no es válido.";
+        }
+
+        return { valid: false, error: msg };
     } finally {
         if (app) {
             try { await deleteApp(app); } catch (e) { console.warn("Error cleanup temp app", e); }

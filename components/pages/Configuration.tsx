@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AppConfig, UserRole } from '../../types';
 import { getConfig, saveConfig, resetApp, isFirebaseConfigured, restoreBackup, validateConfig } from '../../services/storage';
-import { Save, Check, AlertTriangle, Cloud, Download, Upload, HardDriveDownload, QrCode, Copy, X, Zap, Settings, Building2, Users, Printer, Scale, ShieldAlert, Loader2, Link, CloudOff, LogOut, Smartphone, Code, Edit3 } from 'lucide-react';
+import { Save, Check, AlertTriangle, Cloud, Download, Upload, HardDriveDownload, QrCode, Copy, X, Zap, Settings, Building2, Users, Printer, Scale, ShieldAlert, Loader2, Link, CloudOff, LogOut, Smartphone, Code, Edit3, HelpCircle, ExternalLink } from 'lucide-react';
 import { AuthContext } from '../../App';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -14,6 +14,7 @@ const Configuration: React.FC = () => {
   // Connection Form State
   const [isConnecting, setIsConnecting] = useState(false);
   const [testError, setTestError] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
   
   // Mode Toggle: 'SMART' (Paste) or 'MANUAL' (Fields)
   const [connectMode, setConnectMode] = useState<'SMART' | 'MANUAL'>('SMART');
@@ -289,9 +290,13 @@ const Configuration: React.FC = () => {
                                 </p>
                             </div>
                         </div>
-                        {isConnected && (
+                        {isConnected ? (
                             <button onClick={handleDisconnect} className="text-xs bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-lg font-bold hover:bg-red-50">
                                 Desconectar
+                            </button>
+                        ) : (
+                             <button onClick={() => setShowHelp(true)} className="text-xs flex items-center bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-200">
+                                <HelpCircle size={14} className="mr-1"/> ¿Problemas?
                             </button>
                         )}
                     </div>
@@ -583,6 +588,45 @@ const Configuration: React.FC = () => {
                   </div>
 
                   <button onClick={() => setShowQR(false)} className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800">Listo, Cerrar</button>
+              </div>
+          </div>
+      )}
+
+      {/* HELP MODAL */}
+      {showHelp && (
+          <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                  <button onClick={() => setShowHelp(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><X/></button>
+                  <h3 className="text-xl font-black text-slate-900 mb-4 flex items-center">
+                      <HelpCircle className="mr-2 text-blue-600"/> Guía de Conexión Firebase
+                  </h3>
+                  
+                  <div className="space-y-4 text-sm text-slate-600">
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                          <h4 className="font-bold text-slate-800 mb-2">1. Crear Proyecto y Base de Datos</h4>
+                          <p className="mb-2">Entra a <a href="https://console.firebase.google.com" target="_blank" className="text-blue-600 underline font-bold">console.firebase.google.com</a>, crea un proyecto y ve a <strong>Firestore Database</strong>.</p>
+                          <p>Haz clic en <strong>Crear base de datos</strong>. Selecciona una ubicación (ej. us-central1) e inicia en <strong>Modo de prueba</strong>.</p>
+                      </div>
+
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                          <h4 className="font-bold text-slate-800 mb-2">2. Configurar Reglas de Seguridad</h4>
+                          <p className="mb-2">Si te sale "Permisos denegados", ve a la pestaña <strong>Reglas</strong> en Firestore y pega esto:</p>
+                          <pre className="bg-slate-800 text-slate-100 p-3 rounded-lg font-mono text-xs overflow-x-auto">
+                              {`rules_version = '2';\nservice cloud.firestore {\n  match /databases/{database}/documents {\n    match /{document=**} {\n      allow read, write: if true;\n    }\n  }\n}`}
+                          </pre>
+                          <p className="mt-2 text-xs text-amber-600 font-bold flex items-center"><AlertTriangle size={12} className="mr-1"/> Esto hace la base de datos pública (ideal para pruebas o uso interno simple).</p>
+                      </div>
+
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                           <h4 className="font-bold text-slate-800 mb-2">3. Obtener Credenciales</h4>
+                           <p>Ve a <strong>Configuración del Proyecto (rueda dentada)</strong> {'>'} <strong>General</strong>.</p>
+                           <p>Baja hasta "Tus apps", selecciona el ícono de Web (<code>&lt;/&gt;</code>), registra la app y copia el objeto <code>firebaseConfig</code>.</p>
+                      </div>
+                  </div>
+
+                  <div className="mt-6 flex justify-end">
+                      <button onClick={() => setShowHelp(false)} className="bg-blue-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-800">Entendido</button>
+                  </div>
               </div>
           </div>
       )}
