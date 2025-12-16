@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { User } from './types';
-import { LogOut, ArrowLeft, Settings, Database } from 'lucide-react';
+import { LogOut, ArrowLeft, Settings, Database, Cloud, CloudOff } from 'lucide-react';
+import { isFirebaseConfigured } from './services/storage';
 
 // Pages
 import LoginPage from './components/pages/Login';
@@ -24,6 +25,19 @@ export const AuthContext = React.createContext<{
 const Container: React.FC<{ children: React.ReactNode; title?: string; showBack?: boolean }> = ({ children, title, showBack }) => {
   const { user, logout } = React.useContext(AuthContext);
   const navigate = useNavigate();
+  const [isCloudConnected, setIsCloudConnected] = useState(isFirebaseConfigured());
+  
+  // Listen for config changes to update badge
+  useEffect(() => {
+    const check = () => setIsCloudConnected(isFirebaseConfigured());
+    // Interval check in case of connection drop/reconnect logic (simplified)
+    const interval = setInterval(check, 3000);
+    window.addEventListener('avi_data_config', check);
+    return () => {
+        clearInterval(interval);
+        window.removeEventListener('avi_data_config', check);
+    }
+  }, []);
 
   if (!user) return <Navigate to="/login" />;
 
@@ -42,6 +56,16 @@ const Container: React.FC<{ children: React.ReactNode; title?: string; showBack?
           </div>
           <div className="flex items-center space-x-4">
             
+            {/* Connection Status Indicator */}
+            <button 
+              onClick={() => navigate('/config')}
+              className={`hidden sm:flex items-center px-3 py-1.5 rounded-full text-xs font-bold border transition-all hover:scale-105 active:scale-95 ${isCloudConnected ? 'bg-emerald-900/50 text-emerald-400 border-emerald-700 hover:bg-emerald-900' : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700'}`}
+              title="Estado de la Nube"
+            >
+               {isCloudConnected ? <Cloud size={14} className="mr-2"/> : <CloudOff size={14} className="mr-2"/>}
+               {isCloudConnected ? "EN LÍNEA" : "OFFLINE"}
+            </button>
+
             <div className="text-right hidden sm:block">
               <p className="text-sm font-semibold text-blue-100">{user.name}</p>
               <p className="text-xs text-blue-300">{user.role}</p>

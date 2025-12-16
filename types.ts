@@ -66,4 +66,15 @@ export interface AppConfig {
   scaleConnected: boolean;
   defaultFullCrateBatch: number; // e.g., 5
   defaultEmptyCrateBatch: number; // e.g., 10
+  // Cloud Config
+  organizationId?: string;
+  firebaseConfig?: {
+    apiKey: string;
+    authDomain?: string;
+    projectId: string;
+    storageBucket?: string;
+    messagingSenderId?: string;
+    appId?: string;
+    databaseURL?: string;
+  };
 }
